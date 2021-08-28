@@ -1,0 +1,223 @@
+<head>
+    <title>Proyectos Absurdos - spokes()</title>
+    <meta charset="UTF-8">
+    <meta property="og:title" content="Proyectos Absurdos - spokes()" />
+    <meta property="og:description" content="Draw colorful lines inside a circle" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nova+Mono&display=swap" rel="stylesheet"> 
+    <style>
+    * {margin:0;padding:0;}
+    body, html {font-family: 'Nova Mono', monospace;height:100%;overflow:hidden;background-color:#fff;}
+    #menu {color:#fff;position:absolute;z-index:0;}
+    .menu_stl {font-size:20px;font-weight:bold;margin:5px;}
+    .menu_inp {width:120px;height:20px;}
+    .btn {
+  -webkit-border-radius: 5;
+  -moz-border-radius: 5;
+  border-radius: 5px;
+  color: #080808;
+  background: #ffffff;
+  padding: 1px 2px 1px 2px;
+  text-decoration: none;
+  margin-top:5px;
+  width: 160px;
+  font-family: 'Nova Mono', monospace;
+  font-size:17px;
+}
+    .input_cnt{padding:0px 5px 0px 5px;}
+    .sub_menu{border-bottom: 3px solid #fff;padding:0px 0px 5px 0px;}
+    #menu_1 {display:none;border:3px solid #fff;text-align:right;padding:0px 0px 5px 0px;}
+    #cnvs {z-index:1;background-color:#000;}
+    </style>
+</head>
+<body>
+
+
+    <div id="menu">
+        
+        <div id="menu_0" class="menu_stl">
+            <label onclick="togglemenu()">[ MENU ]</label>
+        </div>
+
+
+        <div id="menu_1" class="menu_stl">
+
+            <div style="border-bottom:3px solid #fff;padding:0px 5px 0px 5px;margin:0px;text-align:left;">
+                MENU<label onclick="togglemenu()" style="position:relative;float: right;">❌</label></br>
+            </div>
+
+
+        <div class="sub_menu">
+            <div style="white-space:nowrap" class="input_cnt">
+                <label for="bg">bg:</label>
+                <input type="color" id="color_sel0" value="#000000" style="display:none;"/>
+                <input class="menu_inp" style="background-color: #000;color:#ffffff;" type="text" id="bg" value="#000000" onfocus="changebg()" onclick="changebg()"/>
+            </div>
+            <div style="white-space:nowrap" class="input_cnt">
+                <label for="fg">fg:</label>
+                <select class="menu_inp" name="fg" onchange="changecol(this)">
+                    <option class="menu_inp" value="0">rainbow</option>
+                    <option class="menu_inp" value="1">custom</option>
+                </select><br/>
+                <input type="color" id="color_sel1" value="#ffffff" style="display:none;"/>
+                <input class="menu_inp" style="display:none;background-color: #fff;color:#000;margin-left: auto;margin-right: 0px;" type="text" id="fg" value="#ffffff" onfocus="changefg()" onclick="changefg()"/>
+            </div>
+
+
+
+        </div>
+
+        <div class="sub_menu" style="text-align: center;">
+            <div style="white-space:nowrap" class="input_cnt">
+                <label for="n">n :</label>
+                <input class="menu_inp" type="number" id="n" value="172"/>
+            </div>
+            <div style="white-space:nowrap" class="input_cnt">
+                <label for="s">s :</label>
+                <input class="menu_inp" type="number" id="s" value="400"/>
+            </div>
+            <div style="white-space:nowrap" class="input_cnt">
+                <label for="t" style="font-size:15px;">⏲ </label>:
+                <input class="menu_inp" type="number" id="t" value="500" placeholder="ms"/>
+            </div>
+            <div style="white-space:nowrap" class="input_cnt">
+                <label for="f">f :</label>
+                <input class="menu_inp" type="number" id="f" value="400"/>
+            </div>
+        </div>
+        <div class="sub_menu"style="text-align: center;">
+            <input type="button" class="btn" onclick="toggledraw()" value="CLOSE & DRAW" id="tgldraw"><br/>
+            <input type="button" class="btn" onclick="fullrender()" value="ONLY RENDER"><br/>
+            <!--<input type="button" class="btn" onclick="savecanvas()" value="SAVE RENDER"><br/>-->
+        </div>
+        <div style="width:100%;text-align: center;font-size:15px;padding-top:5px;">version 0.2</div>
+        
+        </div>  
+    </div>
+<canvas id="cnvs"></canvas>
+
+
+
+
+</body>
+<script>
+    //              n  s  h  f
+    var drawVars = [0, 0, 0, 0]
+    var custom_color = 0;
+    var drawInterval = "";
+    var c=document.getElementById("cnvs");
+    var ctx=c.getContext("2d");
+    ctx.canvas.width  = window.innerWidth;
+    ctx.canvas.height = window.innerHeight;
+    ctx.lineWidth=1;
+    centro=[Math.floor(window.innerWidth*0.5), Math.floor(window.innerHeight*0.5)];         //mobile
+    if (window.innerWidth>window.innerHeight){r=Math.floor(window.innerHeight*0.45);}else{r=Math.floor(window.innerWidth*0.48);};
+
+//////////////////////////////////////////////////////////////////
+
+function rnd_color(step, s){
+    if(custom_color){return document.getElementById("color_sel1").value};
+    colorArr = []
+    while(colorArr.length < 3){
+        a = (Math.floor(Math.sin(Math.PI/s*2*step+(colorArr.length*Math.PI*2/3))*127)+128).toString(16);
+        colorArr.push(a.length === 1 ? "0"+a : a)
+    };
+    return "#" + colorArr[0] + colorArr[1] + colorArr[2];
+};
+
+///////////////////////////////////////////////////////////////////////
+function invertColor(input){
+    inv = ((~parseInt(input.replace("#", ""), 16)>>>0)&0xffffff).toString(16);
+    if(inv.length < 6){
+        while(inv.length < 6){
+            inv = "0" + inv;
+        };
+    };
+    return "#" + inv; 
+};
+function togglemenu(){
+    if(document.getElementById("menu_1").style.display == ""){document.getElementById("menu_1").style.display = "none"};
+        if(document.getElementById("menu_1").style.display == "none"){
+            document.getElementById("menu_1").style.display = "inline-block"
+            document.getElementById("menu_0").style.display = "none";
+        }else{
+            document.getElementById("menu_1").style.display = "none"
+            document.getElementById("menu_0").style.display = "inline-block";
+        };
+};
+function fullrender(){
+    document.getElementById("f").value = document.getElementById("s").value;
+    ctx.clearRect(0, 0, c.width, c.height);
+    var n = parseInt(document.getElementById("n").value);
+    var s = parseInt(document.getElementById("s").value);
+    var h = (2*Math.PI)/s;
+    for (i = 1; i < s+1; i++) {
+        ctx.strokeStyle=rnd_color(i, s);
+        ctx.beginPath();
+        ctx.moveTo((Math.cos(h*i)*r)+centro[0],(Math.sin(h*i)*r)+centro[1]);
+        ctx.lineTo((Math.cos(h*i*n)*r)+centro[0],(Math.sin(h*i*n)*r)+centro[1]);
+        ctx.stroke();
+        };
+    };
+function toggledraw(){
+    if(document.getElementById("tgldraw").value == "STOP"){
+        clearInterval(drawInterval);
+        document.getElementById("tgldraw").value = "CLOSE & DRAW";
+    }else{
+            //              n  s  h  f
+            ctx.clearRect(0, 0, c.width, c.height);
+        drawVars = [parseInt(document.getElementById("n").value), parseInt(document.getElementById("s").value), 0, 1];
+        drawVars[2] = (2*Math.PI)/drawVars[1];
+        drawInterval = setInterval(drawLine, parseInt(document.getElementById("t").value));
+        document.getElementById("tgldraw").value = "STOP";
+        togglemenu()
+    };
+};
+function savecanvas(){
+
+};
+function changebg(){
+document.getElementById("color_sel0").click();
+sel_col = document.getElementById("color_sel0").value;
+document.getElementById("cnvs").style.backgroundColor = sel_col;
+document.getElementById("bg").style.backgroundColor = sel_col;
+document.getElementById("bg").value = sel_col;
+document.getElementById("bg").style.color= invertColor(sel_col);
+};
+function changefg(){
+document.getElementById("color_sel1").click();
+sel_col = document.getElementById("color_sel1").value;
+document.getElementById("fg").style.backgroundColor = sel_col;
+document.getElementById("fg").value = sel_col;
+document.getElementById("fg").style.color= invertColor(sel_col);
+fullrender();
+};
+function changecol(obj){
+if(obj.value == "1"){
+    custom_color = 1;
+    document.getElementById("fg").style.display = "block";
+}else{
+    custom_color = 0;
+    document.getElementById("fg").style.display = "none";
+};
+fullrender();
+};
+function drawLine(){
+    console.log(drawVars)
+    //              n  s  h  f
+    if(drawVars[3] > drawVars[1]){
+        toggledraw();
+    }else{
+        document.getElementById("f").value = drawVars[3];
+        ctx.strokeStyle=rnd_color(drawVars[3], drawVars[1]);
+        ctx.beginPath();
+        ctx.moveTo((Math.cos(drawVars[2]*drawVars[3])*r)+centro[0],(Math.sin(drawVars[2]*drawVars[3])*r)+centro[1]);
+        ctx.lineTo((Math.cos(drawVars[2]*drawVars[3]*drawVars[0])*r)+centro[0],(Math.sin(drawVars[2]*drawVars[3]*drawVars[0])*r)+centro[1]);
+        ctx.stroke();
+        drawVars[3]++;
+    };
+};
+fullrender()
+</script>
